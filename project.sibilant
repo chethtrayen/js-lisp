@@ -1,0 +1,196 @@
+;; This project is written in Sibilant, a LISP that transpiles to
+;; javascript. We are using Sibilant because it's similar to our
+;; language of choice, Clojure, but easier to get started with. It
+;; also doesn't have an extensive ecosystem of native libraries, which
+;; means you'll have to work a little harder to do this task :). Sibilant 
+;; documentation and a tutorial can be found here: https://sibilant.org/
+
+;; Install Sibilant by running:
+
+;; npm install -g sibilant
+
+;; Then, copy this file to a local directory and run it to see an
+;; explanation of the project:
+ 
+;; sibilant -x -f project.sibilant 
+
+(console.log "Write a function that will take in a list of strings and")
+(console.log "print a list of each distinct string in the input list,")
+(console.log "along with the number of times the string occurs in the list.")
+(console.log "The strings should be ordered by most to least frequently occuring.")
+
+(var inputs1 ["t" "a" "t" "b" "b" "b" "t" "t" "c" "c" "t" "c"])
+
+;; Your solution goes here.
+
+;; Time complexity O(nLogn)
+;; Space complexity O(1)
+(def sort-entries [arr]
+    (.sort arr (#(a b) (- (second b ) (second a)))))
+
+;; Time complexity O(nLogn)
+;; Space complexity O(n^2)
+(def get-string-frequently [arr]
+    (var arr-map {})
+    (.forEach arr 
+        (#(e)
+            (if (get arr-map e)
+            (set arr-map e (+ 1 (get arr-map e)))
+            (set arr-map e 1))))
+    (var sorted-arr (sort-entries (.entries Object arr-map)))
+    (console.log sorted-arr)
+    sorted-arr)
+
+;; Once you have a solution for the above inputs,
+;; test it against these inputs:
+
+(def gen-input [length]
+  (var samples ["abc" "def" "ghi" "jkl" "mno" "pqr"])
+  (.from Array {length: length}
+               (#> (get samples (.floor Math (* (.random Math)
+	                                        (get samples 'length)))))))
+	       
+(var inputs2 (gen-input 100))
+(var inputs3 (gen-input 1000))
+
+;; Can you come up with more tests that exercise your code
+;; in ways that prove it is correct?
+
+;; Time complexity O(n)
+;; Space complexity O(1)
+(def type-check [result-arr]
+    (.every result-arr (#(hash) (string? (first hash)) (number? (second hash)))))
+
+;; Time complexity O(n)
+;; Space complexity O(n)
+(def sort-check [result-arr]
+    when((<= result-arr.length 1) true)
+    (var last-val 0)
+    (var result true)
+    (var values (.map result-arr (#(e)(second e))))
+    (.forEach values
+        (#(e)
+            (if (= last-val 0) (assign last-val e))
+            (if (< last-val e) (assign result false))))
+    result)
+
+;; Time complexity O(n)
+;; Space complexity O(n)
+(def dup-check [result-arr]
+    when((<= result-arr.length 1) true)
+    (var result true)
+    (var slow-pos  0)
+    (var fast-pos (+ slow-pos 1))
+    (var keys (.map result-arr (#(e) (first e))))
+    until( (= fast-pos slow-pos)
+        (if ( = (get keys slow-pos) (get keys fast-pos)) (assign result false))
+        (if ( < fast-pos (- (length result-arr) 1)) (incr fast-pos)) 
+        (incr slow-pos))
+    result)
+
+;; Time complexity O(n^2)
+;; Space complexity O(n)
+(def value-check [arr result-arr]
+    when((= result-arr.length 0) true)
+    (var result true)
+    (.forEach result-arr (#(hash) 
+        (var filter-len (length (.filter arr (#(e) (= e (first hash))))))
+        (if (!= filter-len (second hash)) (assign result false))))
+    result)
+
+;; Time complexity O(nlogn)
+;; Space complexity O(n)
+(def key-check [arr result-arr]
+    (var keys (.map result-arr (#(e) (first e))))
+    (var acc [])
+    (.forEach arr (#(e) (if (!(.includes acc e)) (.push acc e))))
+    (.sort acc) 
+    (.sort keys)
+    (when (!= (length keys) (length acc)) false)
+    (.every keys (#(e i) (= e (get acc i)))))
+
+
+(def single-arr-test [result-arr result-arr-name]
+    (console.log "")
+    (console.log "< Testing:" result-arr-name ">")
+    (console.log "Duplication check:" (dup-check result-arr))
+    (console.log "Type check:" (type-check result-arr))
+    (console.log "Sort check:" (sort-check result-arr)))
+
+(def multi-arr-test [arr result-arr arr-name result-arr-name]
+    (console.log "")
+    (console.log "< Testing:" result-arr-name arr-name ">")
+    (console.log "Key check:" (key-check arr result-arr))
+    (console.log "Value check:" (value-check arr result-arr)))
+
+(var out1 (get-string-frequently inputs1))
+(var out2 (get-string-frequently inputs2))
+(var out3 (get-string-frequently inputs3))
+
+(console.log "")
+(console.log "<-- Unit test -->")
+(single-arr-test out1 "outs1") 
+(single-arr-test out2 "outs2") 
+(single-arr-test out3 "outs3") 
+
+(console.log "")
+(console.log "<-- Truthy test --->")
+(multi-arr-test inputs1 out1 "inputs1" "outs1") 
+(multi-arr-test inputs2 out2 "inputs2" "outs2") 
+(multi-arr-test inputs3 out3 "inputs3" "outs3") 
+
+(console.log "")
+(console.log "<-- Falsey test --->")
+(multi-arr-test inputs2 out1 "inputs2" "outs1") 
+(multi-arr-test inputs3 out2 "inputs3" "outs2") 
+(multi-arr-test inputs1 out3 "inputs1" "outs3") 
+
+
+;; Time complexity O(n)
+;; Space complexity O(n)
+(def generate-arr [hash] 
+    (var acc [])
+    (.forEach hash (#(e) 
+        (assign acc 
+            (.concat acc 
+                (.from Array {length: (second e)} 
+                    (#> (first e)))))))
+    acc)
+
+;; Time complexity O(1)
+;; Space complexity O(1)
+(def get-rand [n]
+    (.floor Math (* (.random Math) n)))
+
+;; Time complexity O(n)
+;; Space complexity O(n)
+(def generate-hash [complexity] 
+    (var strings ["foo" "bar" "barrrr"  "foooooo" "b" "fo"])
+    (var out-arr [])
+    (when (= complexity 0) out-arr)
+    (.forEach strings (#(e) 
+        (var assign-num 0)
+        (if (= e (last strings)) (assign assign-num complexity) 
+        (do 
+            (assign assign-num (get-rand complexity))
+            (assign complexity (- complexity assign-num))))
+        (.push out-arr [e assign-num])))
+        (.filter out-arr (#(e) ( > (second e) 0))))
+
+;; Time complexity O(n^2)
+;; Space complexity O(n^2)
+(def generated-test [complexity]
+    (var result true)
+    (until (< complexity 0) 
+        (var generated-hash (sort-entries (generate-hash complexity)))
+        (var generated-arr (generate-arr generated-hash))
+        (var result-arr (get-string-frequently generated-arr))
+        (if (= (.stringify JSON result-arr) (.stringify JSON generated-hash)) (console.log complexity  "Passed") 
+        (do 
+            (console.log complexity  "Failed") 
+            (assign result false)))
+        (decr complexity))
+    (if result (console.log "Passed all test") (console.log "Failed one test")))
+
+;;Uncomment to run auto-generated property based testing
+;;(generated-test 5000)
